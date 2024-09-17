@@ -1,0 +1,123 @@
+1. Crea un nuevo usuario llamado "ventasadmin" con acceso desde cualquier equipo y contraseña "miventapass".
+
+create user ventasadmin@'%' identified by 'miventapass';
+
+2. Otorga todos los permisos posibles al usuario "ventasadmin" sobre una base de datos llamada "ventasDB", con la capacidad de otorgar permisos a otros usuarios.
+
+grant all privileges on ventasDB.* to ventasadmin@'%' with grant option;
+
+"grant option" después del nombre de la base de datos, pero el comando correcto es "WITH GRANT OPTION" al final de la instrucción GRANT. Esto permite que el usuario "ventasadmin" otorgue permisos a otros usuarios.
+
+
+
+3. Otorga permisos al usuario "ventasadmin" para que pueda seleccionar, insertar, actualizar y eliminar registros en la tabla "clientes" de la base de datos "ventasDB".
+
+grant select, insert, update, delete on ventasDB.clientes to ventasadmin@'%';
+
+Crea un nuevo usuario llamado "consultorventas" con contraseña "consulta123", que solo pueda conectarse desde localhost y 
+tenga permisos para seleccionar datos de la tabla "productos" en "ventasDB".
+
+create user consultorventas@'localhost' identified by 'consulta123';
+
+grant select on ventasDB.productos to consultorventas@'localhost';
+
+
+4. Revoca los privilegios de inserción y actualización para el usuario "consultorventas" en la tabla "productos".
+
+revoke insert, update on ventasDB.productos to consultorventas@'localhost';
+
+
+5. Conéctate como root y otorga al usuario "ventasadmin" el permiso "CREATE USER" para que pueda crear nuevos usuarios.
+grant create user on *.* to ventasadmin@'%';
+
+
+6.Conéctate como "ventasadmin" y muestra todas las bases de datos disponibles.
+mysql -u ventasadmin -p miventapass
+
+show databases;
+
+
+6. Cambia la contraseña del usuario "consultorventas" de "consulta123" a "nuevapass".
+
+alter user consultor@'localhost' identified by 'nuevapass';
+
+7. Cambia el nombre del usuario "consultorventas" a "consultor_ventas".
+
+rename consultorventas@'localhost' to consultor_ventas@'localhost';
+
+
+8. Crea un nuevo usuario llamado "nuevousuario" con contraseña "mipassword" que pueda conectarse solo desde el equipo 
+con dirección IP 192.168.1.100 y tenga permisos para seleccionar y actualizar registros en la tabla "ejemplo" de la base de datos "micompanyDB".
+
+create user nuevousuario@'192.168.1.100' identified by 'mipassword';
+grant select, update on micompanyDB.ejemplo to nuevousuario@'192.168.1.100';
+
+
+
+9. Otorga al usuario "nuevousuario" el permiso de crear nuevas bases de datos, pero solo desde localhost.
+
+grant create on *.* to nuevousuario@'localhost';
+
+10. Revoca el permiso de selección para el usuario "nuevousuario" en la tabla "ejemplo" de la base de datos "micompanyDB".
+revoke select on micompanyDB.ejemplo FROM nuevousuario@'192.168.1.100';
+
+11. Conéctate como root y muestra todos los usuarios en el sistema.
+
+mysql -u root -p root;
+
+12. Revoca todos los privilegios para el usuario "nuevousuario".
+
+revoke all privileges on *.* from nuevousuario@'192.168.1.100';
+
+13. Elimina al usuario "nuevousuario" del sistema.
+
+drop user nuevousuario@'192.168.1.100';
+
+
+1. Crear un usuario y otorgar todos los permisos:
+
+Crea un nuevo usuario llamado "farmaceutico" con contraseña "jefe" que solo pueda conectarse desde localhost.
+Otorga todos los permisos en la base de datos "farmacia" al usuario "farmaceutico" con la opción de otorgar permisos a otros usuarios.
+Crear usuario con permisos específicos:
+
+	create user farmaceutico@'localhost' identified by 'jefe';
+
+	grant all privileges on farmacia.* to farmaceutico@'localhost';
+
+
+2. Crea un nuevo usuario llamado "mancebo" con contraseña "currante" que solo pueda conectarse desde el equipo con la dirección IP 192.168.0.1_.
+Otorga al usuario "mancebo" permisos de selección en todas las tablas de la base de datos "farmacia" y permisos de inserción y 
+eliminación en las tablas "cliente", "comp_cred" y "comp_efect".
+
+	crete user mancebo@'192.168.0.1_' identified by 'currante';
+	grant select on farmacia.* to mancebo@'192.168.0.1_';
+	grant insert, delete on farmacia.cliente, farmacia.comp_cred, farmacia.comp_efect to mancebo@'192.168.0.1_';
+
+
+3. Revocar permisos específicos:
+Revoca el permiso de inserción en las tablas "cliente", "comp_cred" y "comp_efect" de la base de datos "farmacia" para el usuario "mancebo" que se conecta desde el equipo con la dirección IP 192.168.0.1_.
+
+	revoke insert on farmacia.cliente, farmacia.comp_cred, farmacia.comp_efect from mancebo@'192.168.0.1_';
+
+Cambiar la contraseña de un usuario:
+
+Cambia la contraseña del usuario actual a 'YYYYYYYY'.
+Conectar a MySQL desde la línea de comandos:
+
+alter user identified by 'YYYYYYYY';
+
+Conéctate a MySQL utilizando el usuario 'usuario', la contraseña 'contraseña' y el equipo especificado.
+Crear usuario y otorgar permisos de selección:
+
+create user usuario@'%' identified by 'contraseña'
+
+grant select on *.* to usuario@'%';
+
+Crea un nuevo usuario llamado "consultor" con contraseña vacía que puede conectarse desde cualquier equipo de la subred 192.168.0.%.
+Otorga al usuario "consultor" permisos de selección en la vista "vista_compras" de la base de datos "farmacia".
+
+create user consultor@'192.168.0.%' identified by '';
+
+grant select on farmacia.vista_compras to consultor@'192.168.0.%';
+
+

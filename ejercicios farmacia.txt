@@ -1,0 +1,303 @@
+1.- Crear la función Cantidad_Efectivo que recibe como parámetro el DNI de un cliente y
+devuelve un entero indicando la cantidad de medicamentos comprados en efectivo por ese
+cliente.
+
+delimiter//
+create function cantidad_efectivo(dni char(9)) returns int reads sql data
+begin
+declare total int default 0;
+if exists(select * from comp_efec where dni_cliente=dni) then 
+	select sum(unidades) into total from comp_efect where dni_cliente=dni;
+end if;
+return total;
+end//
+delimiter ;
+
+2.- Crear la función Cantidad_Credito que recibe como parámetro el DNI de un cliente y
+devuelve un entero indicando la cantidad de medicamentos comprados a crédito por ese
+cliente.
+delimiter//
+create function cantidad_credito(dni char(9)) returns int reads sql data
+begin
+declare total int;
+if exists(select * from comp_cred where dni_cliente=dni) then
+	select sum(unidades) into total from comp_cred where dni_cliente=dni;
+end if;
+return total;
+end//
+delimiter ;
+
+3.- Crear la función Cantidad_Total que recibe como parámetro el DNI de un cliente y devuelve
+un entero indicando la cantidad total de medicamentos comprados por ese cliente, en efectivo
+y a crédito. Usar para ello las funciones Cantidad_Efectivo y Cantidad_Credito.
+delimiter //
+create function cantidad_total(dni char(9)) returns int reads sql data
+begin
+declare total int default 0;
+select sum(cantidad_efectivo(dni)+cantidad_credito(dni)) into total;
+
+return total;
+end//
+delimiter;
+
+4.- Crear la función Deuda_Cliente, que recibe como parámetro el DNI de un cliente y devuelve
+un float(11,3) indicando la cantidad total que ese cliente nos debe por los medicamentos que
+se ha llevado a crédito y todavía no ha pagado.
+User
+Delimiter //
+create function deuda_cliente(dni char(9)) returns float(11,3) reads sql data
+begin
+declare total float(11,3);
+select sum(unidades+precio) into total
+from comp_cred c
+join medicamento m on c.cod_med=m.cod_med where dni_cliente=dni and fecha_pago is null;
+return total;
+end //
+delimiter ;
+
+5.- Crear la función Caja_Fecha que recibe como parámetro una fecha y devuelve un
+float(11,3) indicando el importe total de todos medicamentos que ese día se han vendido,
+tanto a crédito como en efectivo.
+delimiter //
+create function caja_fecha(fech date) returns float(11,3) reads sql data
+begin
+declare efec float(11,3) default 0;
+declare cred float(11,3) default 0;
+select sum(unidades*precio) into efec
+from comp_efec e
+join medicamento m on e.cod_med=m.cod_med
+where fech_comp=fech;
+
+select sum(unidades*precio) into cred
+from comp_cred c
+join medicamento m on c.cod_med=m.cod_med
+where fech_comp=fech;
+
+return efec+cred;
+end //
+delimiter ;
+
+6.- Crear el procedimiento Nuevo_Cliente que recibe como parámetros los datos de un cliente
+y los inserta en la correspondiente tabla. Si el cliente ya existe o los datos bancarios coinciden
+con los de otro cliente el procedimiento no insertará nada y deberá hacer que aparezca un
+mensaje de error indicándolo.
+delimiter //
+create procedure nuevo_cliente(dni char(9), tel char(9), dir varchar(30), ban varchar(25))
+begin
+declare d char(9) default null;
+declare b varchar(25) default null;
+
+select dni_cliente, datos_banco into d, b 
+from cliente 
+where dni_cliente=dni or datos_banco=ban;
+
+if(d is not null or b is not null) then
+	signal sqlstate '45000'
+	set message_text = 'Error: el cliente ya existe o los datos del banco ya han sido introducidos';
+else
+	insert into cliente(dni_cliente, telefono, direccion, datos_banco) 
+		values (dni, tel, dir, ban);
+end if;
+end //
+delimiter ;
+
+7.- Crear el procedimiento Borra_Familia que recibirá como parámetro el código de una familia
+de medicamentos y deberá hacer lo siguiente:
+1.- Comprobar que esa familia de medicamentos exista y en caso positivo:
+2.- Iniciar una transacción
+3.- Eliminar todas las compras en efectivo y a crédito de los medicamentos de esa
+familia. Antes de eliminarlas deberá guardarlas en una tabla de histórico compras con
+la misma estructura que las tablas de compra salvo el campo Fech_Pago.
+4.- Eliminar todos los medicamentos de esa familia.
+5.- Eliminar la familia
+6.- Validar la transacción.
+
+create table historico_compras(
+cod_med char(5),
+dni_cliente char(9),
+fech_comp date,
+unidades int
+);
+
+delimiter //
+create procedure borrar_familia(cod_fam char(5)) 
+begin
+declare fam char(5) default null;
+select cod_familia into fam from medicamento where cod_familia=cod_fam;
+if (fam is not null) then
+start transaction;
+
+	insert into historico_compras (cod_med, dni_cliente, fech_comp, unidades)
+	select *, null as fech_pago
+	from comp_cred 
+	where cod_med in (select cod_med from medicamento where cod_familia=cod_fam);
+
+	insert into historico_compras (cod_med, dni_cliente, fech_comp, unidades)
+	select *
+	from comp_efec 
+	where cod_med in (select cod_med from medicamento where cod_familia=cod_fam);
+
+	delete from comp_cred 
+	where cod_med in (select cod_med from medicamento where cod_familia=cod_fam);
+
+	delete from comp_efec
+	where cod_med in (select cod_med from medicamento where cod_familia=cod_fam);
+
+	delete from medicamento where cod_familia=cod_fam;
+	delete from familia where cod_familia=cod_fam;
+commit;
+else
+	rollback;
+	signal sqlstate '45000'
+	set message_text='Error: No existe la familia';
+end if;
+
+end //
+delimiter ;
+
+
+8.- Crear el procedimiento Borra_Cliente que recibirá como parámetro el DNI de un cliente y
+realizará los siguientes pasos:
+1.- Comprobar que dicho cliente existe y que NO tiene compras sin pagar. En caso
+positivo:
+2.- Iniciar una transacción
+3.- Eliminar todas las compras en efectivo y a crédito de los medicamentos que ese
+cliente haya realizado. Antes de eliminarlas deberá guardarlas en una tabla de
+histórico compras con la misma estructura que las tablas de compra salvo el campo
+Fech_Pago.
+4.- Eliminar ese cliente.
+6.- Validar la transacción.
+
+delimiter //
+create procedure borra_cliente(dni char(9)) 
+begin
+declare d char(9);
+declare c float(11,3);
+
+select deuda_cliente(dni) into c;
+select dni_cliente into d from cliente where dni_cliente=dni;
+
+if(d is not null) and (c=0.0) then
+start transaction;
+	insert into historico_compras (cod_med, dni_cliente, fech_comp, unidades)
+	select cod_med, dni_cliente, fech_comp, unidades
+	from comp_cred
+	where cod_med in(select cod_med from medicamento where dni_cliente=dni);
+
+	insert into historico_compras (cod_med, dni_cliente, fech_comp, unidades)
+	select *
+	from comp_efec
+	where cod_med in(select cod_med from medicamento where dni_cliente=dni);
+
+	delete from comp_efec
+	where cod_med in(select cod_med from medicamento where dni_cliente=dni);
+
+	delete from comp_cred
+	where cod_med in(select cod_med from medicamento where dni_cliente=dni);
+
+	delete from cliente where dni_cliente=dni;
+else
+	rollback;
+	signal sqlstate '45000'
+	set message_text='Error: no se puede eliminar';
+end if;
+end //
+delimiter ;
+
+9.- Crear el procedimiento Cambia_Familia que recibe cómo parámetros el código de un
+medicamento y el código de una familia de medicamentos y asigna dicha familia a ese
+medicamento, comprobando previamente que el medicamento y la familia existan.
+delimiter //
+create procedure cambia_familia(m char(5), f char(5))
+begin
+declare med int;
+declare fam int;
+
+select count(*) into fam from familia where cod_familia=f;
+select count(*) into med from medicamento where cod_med=m;
+
+if (fam>0 and med>0) then
+	update medicamento
+	set cod_familia=f
+	where cod_med=m;
+else
+select 'error: el medicamento o la familia existen' as mensaje;
+end if;
+
+
+end //
+delimiter ;
+
+10.- Crear un disparador para que en caso de que un medicamento cambie de precio y pase a
+valer menos que antes, se registre en una tabla Cambios_Precio el código del medicamento, la
+fecha en que se le cambió de precio y el usuario que llevó a cabo el cambio. Se pueden usar las
+funciones Curdate y User.
+
+create table cambio_precio(
+cod_med char(5),
+fecha_cambio date
+);
+
+delimiter //
+create trigger cambio_precio
+after update
+on medicamento
+for each row
+begin
+if(old.precio>new.precio) then
+insert into cambio_precio(cod_med, fecha_cambio) values(new.cod_med, curdate());
+end if;
+end //
+delimiter ;
+
+UPDATE medicamento
+SET Precio = 3.0
+WHERE Cod_Med = 'A0002';
+
+11.- Crear un disparador para que en caso de que un medicamento pase de no requerir receta
+a requerirla, se registre en una tabla Cambios_Receta el código del medicamento, la fecha en
+que se le cambió de precio y el usuario que llevó a cabo el cambio. Se pueden usar las
+funciones Curdate y User.
+create table cambios_receta(
+cod_med char(5),
+fecha date
+);
+
+delimiter //
+create trigger cambio_receta after update on medicamento for each row
+begin
+if(old.receta='NO' and new.receta='SI') then
+	insert into cambios_receta(cod_med, fecha) values (cod_med, curdate());
+end if;
+end //
+delimiter 
+
+update medicamento
+set receta = 'SI'
+where cod_med='D0002';
+
+12.- Crear un disparador que haga que en caso de cambio del teléfono o la dirección de un
+cliente, los anteriores teléfonos o direcciones se guarden en una tabla de histórico de cambios
+para no perderlos.
+create table historico_cambios(
+dni char(9),
+telefono char(9),
+direccion varchar(30)
+);
+
+delimiter //
+create trigger cambio_td after update on cliente for each row
+begin
+if(old.telefono!=new.telefono or old.direccion!=new.direccion) then
+insert into historico_cambios(dni, telefono, direccion) values (dni_cliente, old.telefono, old.direccion);
+end if;
+end //
+delimiter ;
+
+update cliente
+set direccion='plaza españa, 4'
+where dni_cliente='25763985';
+
+13.- Crear los disparadores necesarios para evitar que se pueda registrar una venta de un
+medicamento, a crédito o en efectivo, si el número de unidades en stock de ese medicamento
+es inferior a la cantidad que se pretende vender.

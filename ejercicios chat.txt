@@ -1,0 +1,20 @@
+Ejercicio 1: Actualización de Datos
+
+Crear un procedimiento almacenado llamado Actualizar_Precio que recibe el código de un medicamento y un nuevo precio. 
+Este procedimiento debe actualizar el precio del medicamento correspondiente en la tabla Medicamento.
+
+Ejercicio 2: Consultas Avanzadas
+
+Escribir una consulta que devuelva la cantidad total de medicamentos vendidos por tipo (Tipo) en un rango de fechas dado.
+
+Ejercicio 3: Transacciones con Descuentos
+
+Crear un procedimiento almacenado llamado Realizar_Compra que recibe el DNI del cliente, el código del medicamento, y la cantidad de unidades a comprar. Antes de realizar la compra, verificar si el cliente tiene descuentos y aplicarlos. Actualizar las tablas correspondientes y garantizar la integridad de la transacción.
+
+Ejercicio 4: Eliminación de Datos Históricos
+
+Desarrollar un procedimiento almacenado llamado Borra_Historico que recibe una fecha como parámetro y elimina todas las compras históricas (de la tabla Historico_Compras) anteriores a esa fecha.
+
+Ejercicio 5: Consultas con Funciones de Agregación
+
+Escribir una consulta que devuelva la cantidad total de medicamentos vendidos y el ingreso total por familia de medicamentos.

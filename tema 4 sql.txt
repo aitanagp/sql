@@ -1,0 +1,491 @@
+sobre la base de pruebas test crea un procedimiento para mostrar el año aactual
+delimiter //
+create procedure anyo()
+begin
+
+select year(curdate()) as 'año actual: ';
+
+end //
+delimiter ;
+
+crea y muestra una variable de usuario con set
+¿debe ser de sesión o puede ser global?
+
+
+usa un procedimiento qque muestre las tres primeras letras de una cadena pasada como parametro en mayusculas
+delimiter //
+create procedure letras(cadena char(50))
+begin
+
+select upper(left(cadena,3));
+
+end //
+delimiter ;
+
+crea un procedimiento que muestra dos cadenas pasada como parametros concatenadas y en mayusculaç
+
+delimiter //
+create procedure cadenas(c1 char(50), c2 char(50))
+begin
+select upper(concat(c1, c2));
+end //
+delimiter ;
+
+crea una funcion que devuelva el valor de la hipotenusa de un triangulo a partir de los valores de sus lados
+
+delimiter //
+create procedure hipo(lado1 float, lado2 float)
+begin
+select sqrt(pow(lado1, 2)+ pow(lado2, 2));
+end //
+delimiter ;
+
+
+crea un procedimiento para generar y almacenar en la tabla primos(primos(id, numero)) de la base test
+los primeros numeros primos comprendidos entre 1 y m(parametro de entrada). modifica el procedimiento
+para almacenar en la varibale de slaida @np el número de primos almacenados.
+
+
+delimiter //
+create procedure primos(a int)
+begin
+declare contador int default 2;
+declare primo int default 1;
+while (contador<a) and (primo=1) do
+if a%contador=0 then set primo=0;
+end if;
+set contador=contador+1;
+end while;
+if primo=1 then select 'es primo';
+else select 'no es primo';
+end if;
+end//
+delimiter ;
+
+
+hacer una funcion
+
+delimiter //
+create function primo2(a int) returns int reads sql data
+deterministic
+begin
+declare contador int default 2;
+declare primo int default 1;
+while (contador<a) and (primo=1) do
+if a%contador=0 then set primo=0;
+end if;
+set contador=contador+1;
+end while;
+
+return primo;
+end//
+delimiter ;
+
+delimiter //
+create function sumaprimos(m int) returns int reads sql data
+deterministic
+begin
+declare i int default 1;
+declare contador int default 1;
+declare suma int default 0;
+while contador<m do
+	if primo2(i)=1 then
+        begin
+	set suma=suma+1;
+	set contador=contador+1;
+	end;
+	end if;
+set i=i+1;
+end while;
+return suma;
+end//
+delimiter ;
+
+
+sobre la base test crea un procedimiento qure muestre la suma de los primeros n número
+enteros, siendo n un parámetro de entrada
+delimiter //
+create function sumaenteros(a int) returns int reads sql data
+deterministic
+begin
+declare numero int default 1;
+declare contador int default 0;
+declare suma int default 0;
+repeat
+	set suma=suma+numero;
+	set contador=contador+1;
+set numero=numero+1;
+until (contador=a)
+end repeat;
+return suma;
+end//
+delimiter ;
+
+
+delimiter //
+create function sumaterminos(a int) returns float(8,4) reads sql data
+deterministic
+begin
+declare numero float(8,4) default 1.0;
+declare contador int default 0;
+declare suma float(8,4) default 0;
+repeat
+	set suma=suma+(1.0/numero);
+	set contador=contador+1;
+set numero=numero+1;
+until (contador=a)
+end repeat;
+return suma;
+
+end//
+delimiter ;
+
+crea un procedimiento para generar y almacenar la tabla primos(id, numero) de la base
+test los primeros numeros prios comprendidos entre 1 y m(parametro entrada) modifica el procedimiento
+para almacenar en la variable slaida @np el número de primos almacenado
+
+create table primos(id, numero
+
+create procedure almacenaprimos(m int)
+begin
+declare numero in default 1;
+declare contador int default 0;
+
+repeat if primo1(numero
+
+
+
+crea una funcion que calcule el total de punts en un aprtido tomando 
+como entrada el resultado en formato 'xxx-xxx'
+
+delimiter //
+create function ganador(puntos char(7)) returns int reads sql data
+begin
+declare plocal int;
+declare pvisit int;
+declare posguion int;
+declare gana int default 0;
+
+select instr(puntos, '-') into posguion;
+
+select cast(left(resultado, posguion-1) as unsigned) into plocal;
+select cast(right(resultado,(length(resultado)-posguion+1)) as unsigned) into pvisit;
+
+if plocal>pvisitante then set gana=1;
+
+end if;
+end //
+delimiter ;
+
+
+
+LETRANIF
+
+DELIMITER //
+
+CREATE FUNCTION letranif(dni INT) returns char reads sql data
+BEGIN
+    DECLARE letras CHAR(23) DEFAULT 'TRWAGMYFPDXBNJZSQVHLCKE';
+    DECLARE indice INT;
+
+    SET indice = dni % 23;
+
+    RETURN SUBSTRING(letras, indice + 1, 1);
+END //
+
+DELIMITER ;
+
+
+
+VALIDANIF
+
+delimiter //
+
+create function validanif(nif char(10)) returns int reads sql data
+begin
+    DECLARE letras CHAR(23) DEFAULT 'TRWAGMYFPDXBNJZSQVHLCKE';
+    DECLARE dni_parte INT;
+    DECLARE letra_entrada CHAR(1);
+    DECLARE letra_calculada CHAR(1);
+  
+
+    SET dni_parte = CAST(SUBSTRING(nif, 1, 8) AS SIGNED);
+
+ 
+    SET letra_entrada = UPPER(SUBSTRING(nif, 9, 1));
+
+
+    SET letra_calculada = letranif(dni_parte);
+
+
+    IF letra_entrada = letra_calculada THEN
+return 1;
+  
+    ELSE
+return 0;
+    END IF;
+END //
+DELIMITER ;
+
+
+
+delimiter //
+create function emailok(email char(30)) returns int reads sql data
+begin 
+declare resultado int default 0;
+declare posarroba int default 0;
+declare largo int default 0;
+delcare postpunto int default 0;
+select length(email) into largo;
+
+select instr(email,'@') into posarroba;
+
+if (posarroba > 2) then
+	begin
+	 select instr (email,'.') into pospunto;
+	 if(pospunto-posarroba) >= 2 then
+	  if(largo-pospunto)>=2 then set resultado=1;
+	  end if;
+	 end if;
+	end;
+end if;
+
+return resultado;
+end//
+delimiter ;
+
+create table soltero(
+nif char(9) primary key,
+nombre char(15),
+apellidos char(30),
+telefono char(9),
+email char(30)
+);
+
+
+delimiter //
+create procedure insert_soltero(dni int, nom char(15), ape char(30), tlf char(9), ema char(30))
+begin
+declare letra char(1);
+declare nf char(9);
+declare ema2 char(30) default null;
+if emailok(ema) then set ema2=ema;
+end if;
+select letranif(dni) into letra;
+set nf=concat(dni,letra);
+insert into soltero values(nf,nom,ape,tlf,ema2);
+end//
+delimiter ;
+
+delimiter //
+create procedure borra_soltero(dni int)
+begin
+declare letra char(1);
+declare nf char(9);
+select letranif(dni) into letra;
+select concat(dni, letra) into nf;
+exists(select * from soltero where dni=nf) then delete from soltero where dni=nf;
+else select concat('Dni:', dni, 'error no se han borrado datos') as Error
+end if;
+end//
+delimiter ;
+
+delimiter / 
+create procedure consulta_nombres(nom char(15))
+begin
+if exists(select *  from casado where nombre like nom) then
+begin
+select concat('casados que se llaman como: ', nom);
+select * from casado where nombre like nom;
+end;
+else select concat('error: no existinte casados con ese criterio') as ERROR;
+end if;
+
+end//
+delimiter ;
+
+
+CREATE TRIGGER check_casados
+AFTER INSERT ON casado
+FOR EACH ROW
+EXECUTE FUNCTION borra_soltero();
+
+CREATE TABLE CASADO (
+nif CHAR(10) PRIMARY KEY,
+nombre CHAR(15),
+apellidos CHAR(30),
+telefono CHAR(9),
+email CHAR(30)
+);
+
+insert into casado values('424323245', 'satanasio', 'lopez', '666666666', null);
+
+
+CREATE TABLE bajas (
+    nif CHAR(10) PRIMARY KEY,
+    nombre CHAR(15),
+    apellidos CHAR(30),
+    telefono CHAR(9),
+    email CHAR(30),
+    estado CHAR(1)
+);
+
+
+
+delimiter //
+create trigger borrasoltero
+after delete on soltero
+for each row
+begin 
+insert into bajas(nif, nombre, apellidos, telefono, email, estado)
+values(old.nif, old.nombre, old.apellidos, old.telefono, old.email, 's');
+
+end //
+delimiter ;
+
+delimiter //
+create trigger borracasado
+after delete on casado
+for each row
+begin
+insert into bajas(nif, nombre, apellidos, telefono, email, estado)
+values(old.nif, old.nombre, old.apellidos, old.telefono, old.email, 'c');
+
+
+end //
+delimiter ;
+
+haz un disipador que cree un registro en la tabla nrojos de la base
+ebanca con los campos cliente, cuentza.. cada vez que algun cliente se quede
+en numero rojos en alguna cuenta
+
+
+create table nrojos(
+cliente int primary key,
+cuenta int,
+fecha date,
+saldo int
+);
+
+
+
+delimiter //
+create trigger actrojos 
+after update on cuentas
+for each row
+begin
+
+if (new.saldo < 0) then
+        insert into nrojos (cliente, cuenta, fecha, saldo)
+        values (new.cod_cuenta, new.cod_cliente, curdate(), new.saldo);
+    end if;
+
+end//
+delimiter ; 
+
+
+
+
+crea un disipador para que cada vez que se registre un partido se actualicen los campos pg y pp segun el caso
+en la tabla del equipo
+
+
+delimiter //
+create function ganador(resultado char(7)) returns int reads sql data
+begin
+declare plocal int;
+declare pvisit int;
+declare posguion int;
+declare gana int default 0;
+
+select instr(resultado, '-') into posguion;
+
+select cast(left(resultado, posguion-1) as unsigned) into plocal;
+select cast(right(resultado,(length(resultado)-posguion+1)) as unsigned) into pvisit;
+
+if plocal>pvisitante then set gana=1;
+
+end if;
+return gana;
+end //
+delimiter ;
+
+
+delimiter //
+create trigger actliga
+after insert on partido
+for each row
+begin
+if ganador(new.resultado)=1  then
+ begin
+  update equipo set pg=pg+1 where nombre = new.local;
+  update equipo set pp=pp+1 where nombre = new.visitante;
+ end;
+else
+ begin
+ update equipo set pp=pp+1 where nombre = new.local;
+  update equipo set pg=pg+1 where nombre = new.visitante;
+ end;
+
+end if;
+end//
+delimiter ;
+
+haz un disparador cada vezs que se borre una noticia de la base de datos
+motorblog, registre en la tabla log_borrados el titulo de la noticia, el suuario y la fecha y hora
+
+create table log_noticias(
+titulo text,
+usuario char(100),
+fecha date,
+hora time);
+
+delimiter //
+create trigger borranoticia after delete on noticias
+for each row
+begin
+insert into log_noticias(titulo, usuario, fecha, hora)
+values (old.titulo, user(), curdate(), curtime());
+end//
+delimiter ;
+
+delete from noticias where id=1224;
+
+haz lo necesario para que cada vez que un cliente de ebanca
+ingrese mas de 1000€ se bonifique con 100€, solo para clientes
+con mas de tres años de antigüedad y entre el 1 de enero de 2011 y el 31 
+de marzo de 2011
+
+delimiter //
+create trigger bonificacion before insert on movimientos
+for each row
+begin
+declare fechaapertura date;
+select fecha_creacion into fechaapertura from cuentas where cod_cuenta=new.cod_cuenta;
+
+if (curdate() between "2024-1-1" and "2024-3-31") and 
+ (year (curdate()-year(fechaapertura))>=3) and (new.cantidad>1000)
+ then
+ set new.cantidad = new.cantidad+100;
+end if;
+end//
+delimiter ;
+
+
+delimiter//
+create function mayor(n1 int, n2 int, n3 int) returns int reads sql data
+begin
+declare m int default 0;
+if(n1>n2) then
+    if(n1>n3) then set m=n1;
+    else set m=n3;
+end if;
+end if;
+if (n2>n1) then
+    if(n2>n3) then set m=n1;
+    else set m=n3;
+end if;
+end if;
+return m;
+end//
+delimiter ;
